@@ -42,8 +42,10 @@ def train_rf_model(X_train, y_train):
     }
 
     optimizer = OriginalFOX(epoch=30, pop_size=10)
-    best_solution, _ = optimizer.solve(problem_dict)
+    results = optimizer.solve(problem_dict)
 
+    # Extract the best solution and its parameters from results
+    best_solution = results["best_solution"]
     best_params = {
         "max_depth": int(best_solution[0]),
         "criterion": criterions_encoder.inverse_transform([int(best_solution[1])])[0],
