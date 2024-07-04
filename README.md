@@ -111,4 +111,3 @@ Sadeghsalehi. (2024). BrainMetDetect: A machine learning approach for detecting 
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-```
