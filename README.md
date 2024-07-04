@@ -59,7 +59,7 @@ This module uses SHAP (SHapley Additive exPlanations) to provide explanations fo
 To set up the project, clone the repository and install the required packages:
 
 ```bash
-git clone https://github.com/yourusername/BrainMetDetect.git
+git clone https://github.com/hamidreza-s-salehi/BrainMetDetect.git
 cd BrainMetDetect
 pip install -r requirements.txt
 ```
