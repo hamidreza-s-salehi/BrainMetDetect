@@ -20,8 +20,17 @@ def encode_data(dataset_merged):
     df_encoded["Target"] = target_encoder.fit_transform(df_encoded["Target"])
     return df_encoded, target_encoder
 
+def encode_categorical_features(df):
+    label_encoders = {}
+    for column in df.select_dtypes(include=['object']).columns:
+        le = LabelEncoder()
+        df.loc[:, column] = le.fit_transform(df[column].astype(str))
+        label_encoders[column] = le
+    return df, label_encoders
+
 if __name__ == "__main__":
     radiomics, morphological = load_data()
     dataset_merged = clean_data(radiomics, morphological)
     df_encoded, target_encoder = encode_data(dataset_merged)
+    df_encoded, label_encoders = encode_categorical_features(df_encoded)
     print(df_encoded.head())
