@@ -1,6 +1,6 @@
 # Data Directory
 
-This directory contains the raw and processed data used in the BrainMetDetect project.
+This directory contains the data used in the BrainMetDetect project.
 
 
 ## Data Description
