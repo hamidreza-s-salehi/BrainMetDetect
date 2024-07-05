@@ -1,18 +1,25 @@
-from src import data_preparation, feature_engineering, model_training, model_explanation
+from src.data_preparation import load_data, clean_data, encode_data
+from src.feature_engineering import select_features, normalize_data
+from src.model_training import train_random_forest, optimize_random_forest, train_xgboost
+from src.model_explanation import explain_model
 
 if __name__ == "__main__":
-    # Data Preparation
-    data = data_preparation.load_data()
-    prepared_data = data_preparation.prepare_data(data)
+    radiomics, morphological = load_data()
+    dataset_merged = clean_data(radiomics, morphological)
+    df_encoded, target_encoder = encode_data(dataset_merged)
 
-    # Feature Engineering
-    features, target = feature_engineering.select_features(prepared_data)
-    X_train, X_test, y_train, y_test = feature_engineering.split_data(features, target)
+    df_final = select_features(df_encoded)
+    df_final_normalized = normalize_data(df_final)
 
-    # Model Training
-    rf_model, best_rf_params = model_training.train_rf_model(X_train, y_train)
-    xgb_model, best_xgb_params = model_training.train_xgb_model(X_train, y_train)
+    X = df_final_normalized.drop(columns='Target', axis=1)
+    y = df_final_normalized['Target']
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    # Model Explanation
-    model_explanation.explain_model(rf_model, X_test, y_test, 'Random Forest')
-    model_explanation.explain_model(xgb_model, X_test, y_test, 'XGBoost')
+    rf_model = train_random_forest(X_train, y_train, X_test, y_test)
+    rf_opt_model = optimize_random_forest(X_train, y_train, X_test, y_test)
+    gb_model = train_xgboost(X_train, y_train, X_test, y_test)
+
+    labels = target_encoder.classes_
+    explain_model(rf_model, X_train, X_test, labels)
+    explain_model(rf_opt_model, X_train, X_test, labels)
+    explain_model(gb_model, X_train, X_test, labels)
