@@ -1,61 +1,67 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
+from xgboost import XGBClassifier
 from mealpy.swarm_based.FOX import OriginalFOX
-from sklearn.preprocessing import LabelEncoder
-from mealpy.utils.space import IntegerVar
 
-def train_rf_model(X_train, y_train):
-    list_criterions = ["gini", "entropy"]  # Valid criteria for RandomForestClassifier
+def train_random_forest(X_train, y_train, X_test, y_test):
+    dt_model = RandomForestClassifier(criterion='gini', max_depth=5, min_samples_leaf=1, max_features=TOP_N_FEATURES)
+    dt_model.fit(X_train, y_train)
+    y_pred_dt_labels = dt_model.predict(X_test)
+    print(classification_report(y_test, y_pred_dt_labels))
+    cm_dt = confusion_matrix(y_test, y_pred_dt_labels)
+    ConfusionMatrixDisplay(confusion_matrix=cm_dt).plot()
+    plt.show()
+
+def optimize_random_forest(X_train, y_train, X_test, y_test):
+    list_criterions = ["gini", "entropy", "log_loss"]
     criterions_encoder = LabelEncoder()
     criterions_encoder.fit(list_criterions)
 
     def fitness_function(solution):
-        p = {
-            "max_depth": int(solution[0]),
-            "criterion": criterions_encoder.inverse_transform([int(solution[1])])[0],
-            "max_features": int(solution[2])
-        }
-        model = RandomForestClassifier(
-            criterion=p["criterion"],
-            max_depth=p["max_depth"],
-            max_features=p["max_features"]
-        )
-        model.fit(X_train, y_train)
-        
-        accuracy = model.score(X_train, y_train)
-        return accuracy
+        p = {"max_depth": solution[0], "criterion": criterions_encoder.inverse_transform([solution[1]])[0], "max_features": solution[2]}
+        dt_opt_model = RandomForestClassifier(criterion=p["criterion"], max_depth=p["max_depth"], max_features=p["max_features"])
+        dt_opt_model.fit(X_train, y_train)
+        return dt_opt_model.score(X_test, y_test)
 
-    def obj_func(solution):
-        return fitness_function(solution)
+    lb = [2, 0, 10]
+    ub = [7, len(list_criterions) - 1, TOP_N_FEATURES]
+    epoch = 30
+    pop_size = 10
 
-    problem_dict = {
-        "fit_func": fitness_function,
-        "obj_func": obj_func,
-        "lb": [2, 0, 10],
-        "ub": [7, 1, 50],  # Updated upper bound for criterion index (0 or 1)
-        "minmax": "max",
-        "amend_position": lambda x: [int(xi) for xi in x],
-        "bounds": [
-            IntegerVar(2, 7),    # max_depth bounds
-            IntegerVar(0, 1),    # criterion index (0 for 'gini', 1 for 'entropy')
-            IntegerVar(10, 50)   # max_features bounds
-        ]
-    }
+    problem_dict = {"fit_func": fitness_function, "lb": lb, "ub": ub, "minmax": "max"}
+    fox_optimizer = OriginalFOX(epoch, pop_size)
+    best_solution, best_fitness = fox_optimizer.solve(problem_dict)
 
-    optimizer = OriginalFOX(epoch=30, pop_size=10)
-    results = optimizer.solve(problem_dict)
+    best_params = {"max_depth": best_solution[0], "criterion": criterions_encoder.inverse_transform([best_solution[1]])[0], "max_features": best_solution[2]}
+    dt_best_model = RandomForestClassifier(criterion=best_params["criterion"], max_depth=best_params["max_depth"], max_features=best_params["max_features"])
+    dt_best_model.fit(X_train, y_train)
+    y_pred_best_dt_labels = dt_best_model.predict(X_test)
+    print(classification_report(y_test, y_pred_best_dt_labels))
+    cm_best_dt = confusion_matrix(y_test, y_pred_best_dt_labels)
+    ConfusionMatrixDisplay(confusion_matrix=cm_best_dt).plot()
+    plt.show()
 
-    # Extract the best solution and its parameters from results
-    best_solution = results["best_solution"]
-    best_params = {
-        "max_depth": int(best_solution[0]),
-        "criterion": criterions_encoder.inverse_transform([int(best_solution[1])])[0],
-        "max_features": int(best_solution[2])
-    }
+def train_xgboost(X_train, y_train, X_test, y_test):
+    gb_model = XGBClassifier(learning_rate=0.1, n_estimators=30, max_depth=5, random_state=42, verbosity=0)
+    gb_model.fit(X_train, y_train)
+    y_pred_gb_labels = gb_model.predict(X_test)
+    print(classification_report(y_test, y_pred_gb_labels))
+    cm_gb = confusion_matrix(y_test, y_pred_gb_labels)
+    ConfusionMatrixDisplay(confusion_matrix=cm_gb).plot()
+    plt.show()
 
-    model = RandomForestClassifier(
-        criterion=best_params["criterion"],
-        max_depth=best_params["max_depth"],
-        max_features=best_params["max_features"]
-    )
-    model.fit(X_train, y_train)
-    return model, best_params
+if __name__ == "__main__":
+    from feature_engineering import select_features, normalize_data
+
+    df_final = select_features(df_encoded)
+    df_final_normalized = normalize_data(df_final)
+    X = df_final_normalized.drop(columns='Target', axis=1)
+    y = df_final_normalized['Target']
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    train_random_forest(X_train, y_train, X_test, y_test)
+    optimize_random_forest(X_train, y_train, X_test, y_test)
+    train_xgboost(X_train, y_train, X_test, y_test)
