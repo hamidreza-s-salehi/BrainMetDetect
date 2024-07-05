@@ -1,32 +1,33 @@
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
-from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
+import matplotlib.pyplot as plt
 
-def select_features(data):
-    df_encoded = data.copy()
-    df_encoded.rename(columns={"Primary Tumor": "Target"}, inplace=True)
-    df_encoded.drop("PATIENT", axis=1, inplace=True)
+TOP_N_FEATURES = 50
 
-    target_encoder = LabelEncoder()
-    df_encoded["Target"] = target_encoder.fit_transform(df_encoded["Target"])
-
-    cat_columns = df_encoded.select_dtypes(exclude='number').columns
-    for cat_column in cat_columns:
-        categorical_encoder = LabelEncoder()
-        not_null_index = df_encoded[cat_column].notnull()
-        df_encoded.loc[not_null_index, cat_column] = categorical_encoder.fit_transform(df_encoded[cat_column][not_null_index])
-    
-    gini_model = DecisionTreeClassifier()
+def select_features(df_encoded):
     X = df_encoded.drop(columns='Target', axis=1)
     y = df_encoded['Target']
+    gini_model = DecisionTreeClassifier()
     gini_model.fit(X, y)
     feature_importances = pd.Series(gini_model.feature_importances_, index=X.columns)
-    top_features = feature_importances.nlargest(50).index.tolist()
-    top_features.append('Target')
-    df_final = df_encoded[top_features]
-    return df_final.drop(columns='Target'), df_final['Target']
+    top_features_tree = feature_importances.nlargest(TOP_N_FEATURES)
+    top_selected_feature = pd.Series(list(set(top_features_tree.index)))
+    top_selected_feature = top_selected_feature.append(pd.Series(["Target"]))
+    df_final = df_encoded[top_selected_feature]
+    return df_final
 
-def split_data(features, target):
-    X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=42)
-    return X_train, X_test, y_train, y_test
+def normalize_data(df):
+    scaler = MinMaxScaler()
+    std_df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns)
+    return std_df
+
+if __name__ == "__main__":
+    from data_preparation import load_data, clean_data, encode_data
+
+    radiomics, morphological = load_data()
+    dataset_merged = clean_data(radiomics, morphological)
+    df_encoded, target_encoder = encode_data(dataset_merged)
+    df_final = select_features(df_encoded)
+    df_final_normalized = normalize_data(df_final)
+    print(df_final_normalized.head())
