@@ -5,8 +5,17 @@ from sklearn.metrics import classification_report, confusion_matrix, ConfusionMa
 import matplotlib.pyplot as plt
 from xgboost import XGBClassifier
 from mealpy.swarm_based.FOX import OriginalFOX
+from sklearn.preprocessing import LabelEncoder
+
+TOP_N_FEATURES = 50
 
 def train_random_forest(X_train, y_train, X_test, y_test):
+    # Ensure the target variable is categorical
+    if y_train.dtype == 'float' or y_train.dtype == 'int':
+        y_train = y_train.astype(int)
+    if y_test.dtype == 'float' or y_test.dtype == 'int':
+        y_test = y_test.astype(int)
+
     dt_model = RandomForestClassifier(criterion='gini', max_depth=5, min_samples_leaf=1, max_features=TOP_N_FEATURES)
     dt_model.fit(X_train, y_train)
     y_pred_dt_labels = dt_model.predict(X_test)
@@ -54,8 +63,13 @@ def train_xgboost(X_train, y_train, X_test, y_test):
     plt.show()
 
 if __name__ == "__main__":
-    from feature_engineering import select_features, normalize_data
+    from .feature_engineering import select_features, normalize_data
+    from .data_preparation import load_data, clean_data, encode_data, encode_categorical_features
 
+    radiomics, morphological = load_data()
+    dataset_merged = clean_data(radiomics, morphological)
+    df_encoded, target_encoder = encode_data(dataset_merged)
+    df_encoded, label_encoders = encode_categorical_features(df_encoded)
     df_final = select_features(df_encoded)
     df_final_normalized = normalize_data(df_final)
     X = df_final_normalized.drop(columns='Target', axis=1)
