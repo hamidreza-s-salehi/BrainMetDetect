@@ -6,4 +6,3 @@ scikit-learn
 seaborn
 shap
 xgboost
-mealpy
