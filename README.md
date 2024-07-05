@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-BrainMetDetect is a machine learning project aimed at detecting brain metastases using radiomic and morphological measurements. This repository contains the scripts necessary to prepare the data, engineer features, train machine learning models, and explain the models' decisions. The dataset used in this project is publicly available and can be cited using the provided DOI.
+BrainMetDetect is a machine learning project aimed at predicting primary tumors from brain metastasis MRI data using radiomic and morphological measurements. This repository contains the scripts necessary to prepare the data, engineer features, train machine learning models, and explain the models' decisions. The dataset used in this project is publicly available and can be cited using the provided DOI.
 
 ## Directory Structure
 
