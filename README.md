@@ -29,7 +29,7 @@ BrainMetDetect/
 
 The dataset used in this project is sourced from the publication:
 
-- Renz, D. M., et al. (2023). OpenBTAI: A public dataset for radiomic and morphological measurements of brain metastases. *Scientific Data*, 10(1), 123. [https://doi.org/10.1038/s41597-023-02123-0](https://doi.org/10.1038/s41597-023-02123-0)
+- Ocaña-Tienda, B., Pérez-Beteta, J., Villanueva-García, J.D. et al. A comprehensive dataset of annotated brain metastasis MR images with clinical and radiomic data. Sci Data 10, 208 (2023). https://doi.org/10.1038/s41597-023-02123-0
 
 ### Files
 
